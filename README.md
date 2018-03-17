@@ -37,7 +37,8 @@ pattern = *.dll
 pattern = *.lnk
 pattern = *.ps1
 pattern = *.scr
-action = quarantine
+notify = yes
+quarantine = yes
 dest = /quarantined
 ```
 
@@ -52,7 +53,7 @@ Pull requests welcomed! Please keep the following points in mind:
 
 ## Authors
 
-* **Phillip Smith** - [fukawi2](https://phs.is.au)
+* **Phillip Smith** - [fukawi2](https://phs.id.au)
 
 ## License
 
