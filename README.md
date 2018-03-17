@@ -53,7 +53,7 @@ Pull requests welcomed! Please keep the following points in mind:
 
 ## Authors
 
-* **Phillip Smith** - [fukawi2](https://phs.id.au)
+* **Phillip Smith** - [fukawi2](http://phs.id.au)
 
 ## License
 
