@@ -17,7 +17,7 @@ Deploy `fscanary` to your preferred bin location (eg, `/usr/local/bin/fscanary`)
 
 ### Configuration
 
-Configuration is stored in `/etc/fscanary.ini`. The configuration has a global
+Configuration is stored in `/etc/fscanary.conf`. The configuration has a global
 section for general configuration, then one or more sections to set up watches.
 
 Example configuration file:
