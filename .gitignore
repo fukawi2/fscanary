@@ -1,4 +1,2 @@
 /fscanary
-/*.bz2
-/*.exe
-/SHA256SUMS
+/release/
