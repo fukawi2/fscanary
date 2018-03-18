@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# PROVIDE: fscanary
+# REQUIRE: syslog
+# KEYWORD:
+
+. /etc/rc.subr
+
+name="fscanary"
+rcvar="fscanary_enable"
+command="/usr/local/bin/fscanary"
+
+fscanary_user="root"
+fscanary_config="/usr/local/etc/fscanary.conf"
+fscanary_syslog_facility="daemon"
+fscanary_syslog_priority="info"
+
+start_cmd="/usr/sbin/daemon -l $fscanary_syslog_facility -s $fscanary_syslog_priority -T $name -t $name -u $fscanary_user $command -config $fscanary_config"
+
+load_rc_config $name
+: ${fscanary_enable:=no}
+
+run_rc_command "$1"

@@ -1,0 +1,22 @@
+[Unit]
+Description=File System Canary Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+Restart=on-failure
+RestartSec=3
+StartLimitIntervalSec=60
+ExecStart=/usr/local/bin/fscanary
+# log stdin/stdout to syslog/journald
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=fscanary
+# you may wish to give fscanary a higher nice priority to make it schedule
+# better with other system processes
+#Nice=5
+
+[Install]
+WantedBy=default.target
