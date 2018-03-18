@@ -26,6 +26,7 @@ package main
 
 import (
   "fmt"
+  "flag"
   "os"
   "path"
   "log"
@@ -34,8 +35,6 @@ import (
   "github.com/gobwas/glob"
   "gopkg.in/gomail.v2"
 )
-
-const conf_fname = "fscanary.conf"
 
 /*
  * STRUCTS
@@ -62,7 +61,7 @@ type watchPath struct {
 func load_config(fname string) (gconf global_config, watches []watchPath) {
   cfg, err := ini.ShadowLoad(fname)
   if err != nil {
-    fmt.Printf("Fail to read file: %v", err)
+    fmt.Printf("Fail to read file: %v\n", err)
     os.Exit(1)
   }
 
@@ -183,6 +182,11 @@ func handle_event(ei notify.EventInfo) {
 var gconf global_config
 var watches []watchPath
 func main() {
+  // process command line arguments
+  var conf_fname string
+  flag.StringVar(&conf_fname, "config", default_conf_fname, "configuration file to load")
+  flag.Parse()
+
   // load configuration file
   gconf, watches = load_config(conf_fname)
 
