@@ -1,4 +1,4 @@
-# Project Title
+# fscanary
 
 Monitor and report or action file systems for specific files.
 
@@ -17,13 +17,23 @@ Deploy `fscanary` to your preferred bin location (eg, `/usr/local/bin/fscanary`)
 
 ### Configuration
 
-Configuration is stored in `/etc/fscanary.conf`. The configuration has a global
-section for general configuration, then one or more sections to set up watches.
+The default location of the config file is OS-specific and is shown in the
+output of `fscnary -help`. It can be overridden with the `-config` command line
+argument -config. For example:
+
+```
+fscanary -config /root/fscanary.conf
+```
+
+The configuration file is INI-style and has a global section for general
+configuration, then one or more sections to set up watches.
 
 Example configuration file:
 
 ```
 email = admin@example.com
+smtp_server = smarthost
+smtp_from = fscanary@example.com
 
 [executables]
 path = /home
