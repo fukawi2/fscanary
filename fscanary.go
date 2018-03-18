@@ -28,7 +28,8 @@ import (
   "fmt"
   "flag"
   "os"
-  "path"
+  "io"
+  "path/filepath"
   "log"
   "gopkg.in/ini.v1"
   "github.com/rjeczalik/notify"
@@ -156,15 +157,8 @@ func handle_event(ei notify.EventInfo) {
         }
         if watch.qtine {
           // quarantine the file
-          // TODO: os.Rename does not work across file-system boundaries. Need to
-          // create a full copy/delete process.
           fmt.Println(ei.Path(), "being quarantined to", watch.qdest)
-          fname_base := path.Base(ei.Path())
-          fname_dir  := path.Dir(ei.Path())
-          if x,_ := path_is_dir(watch.qdest + fname_dir); x == false {
-            os.MkdirAll(watch.qdest + fname_dir, os.ModePerm)
-          }
-          err :=  os.Rename(ei.Path(), watch.qdest + fname_dir + fname_base)
+          err := moveFile(ei.Path(), watch.qdest + ei.Path())
           if err != nil {
             fmt.Println(err)
             return
@@ -238,4 +232,36 @@ func main() {
       os.Exit(0)
     }
   }
+}
+
+func moveFile(src string, dst string) error {
+  // make sure the file exists by stat'ing it
+  fi, err := os.Stat(src)
+  if err != nil { return err }
+
+  // create any leading directory structure for the destination
+  if err = os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+    fmt.Printf("MkdirAll(%v)\n", filepath.Dir(dst))
+    return err
+  }
+
+  // open the source and destination files
+  fsrc, err := os.Open(src)
+  if err != nil { return err }
+
+  fdst, err := os.Create(dst)
+  if err != nil { return err }
+
+  // copy from old to new
+  if _, err = io.Copy(fdst, fsrc); err != nil {
+    return err
+  }
+
+  if err == nil { err = fsrc.Close() }
+  if err == nil { err = fdst.Close() }
+  if err == nil { err = os.Chmod(dst, fi.Mode()) }
+  if err == nil { err = os.Chtimes(dst, fi.ModTime(), fi.ModTime()) }
+  if err == nil { err = os.Remove(src) }
+
+  return nil
 }
