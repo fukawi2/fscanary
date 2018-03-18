@@ -30,6 +30,7 @@ import (
   "os"
   "io"
   "path/filepath"
+  "os/signal"
   "log"
   "gopkg.in/ini.v1"
   "github.com/rjeczalik/notify"
@@ -175,11 +176,31 @@ func handle_event(ei notify.EventInfo) {
  */
 var gconf global_config
 var watches []watchPath
+var version string  // set at build time by -ldflags
 func main() {
   // process command line arguments
   var conf_fname string
+  var show_version bool
   flag.StringVar(&conf_fname, "config", default_conf_fname, "configuration file to load")
+  flag.BoolVar(&show_version, "version", false, "show version information")
   flag.Parse()
+
+  if show_version {
+    fmt.Println("fscanary", version)
+    fmt.Println("Copyright 2018 Phillip Smith. Licensed under MIT license")
+    os.Exit(0)
+  }
+
+  // setup signal catching
+  sigs := make(chan os.Signal, 1)
+  // catch all signals since not explicitly listing
+  signal.Notify(sigs)
+  // method invoked upon seeing signal
+  go func() {
+    s := <-sigs
+    log.Printf("RECEIVED SIGNAL: %s", s)
+    os.Exit(1)
+  }()
 
   // load configuration file
   gconf, watches = load_config(conf_fname)
