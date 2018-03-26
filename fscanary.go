@@ -121,7 +121,7 @@ func main() {
     fmt.Println("Adding watch: ", watch.title)
     for _,path := range watch.path {
       fmt.Println("  Path: ", path)
-      if err := notify.Watch(path, chNotify, notify.Create|notify.Write|notify.Rename); err != nil {
+      if err := notify.Watch(path + string(os.PathSeparator) + "...", chNotify, notify.Create|notify.Write|notify.Rename); err != nil {
           log.Fatal(err)
       }
     }
