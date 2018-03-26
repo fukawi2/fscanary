@@ -58,6 +58,90 @@ type watchPath struct {
 }
 
 /*
+ * MAIN
+ */
+var gconf global_config
+var watches []watchPath
+var version string  // set at build time by -ldflags
+func main() {
+  // process command line arguments
+  var conf_fname string
+  var show_version bool
+  flag.StringVar(&conf_fname, "config", default_conf_fname, "configuration file to load")
+  flag.BoolVar(&show_version, "version", false, "show version information")
+  flag.Parse()
+
+  if show_version {
+    fmt.Println("fscanary", version)
+    fmt.Println("Copyright 2018 Phillip Smith. Licensed under MIT license")
+    os.Exit(0)
+  }
+
+  // setup signal catching
+  sigs := make(chan os.Signal, 1)
+  // catch all signals since not explicitly listing
+  signal.Notify(sigs)
+  // method invoked upon seeing signal
+  go func() {
+    s := <-sigs
+    log.Printf("RECEIVED SIGNAL: %s", s)
+    os.Exit(1)
+  }()
+
+  // load configuration file
+  gconf, watches = load_config(conf_fname)
+
+  // Validate configuration
+  for _,watch := range watches {
+    if watch.qtine {
+      // must have a valid destination to quarantine to
+      if len(watch.qdest) == 0 {
+        // dest dir no configured!
+        log.Fatal(fmt.Sprintf(
+          "'%s' has quarantine enabled but no destination directory configured",
+          watch.title))
+      }
+      if x,_ := path_is_dir(watch.qdest); x != true {
+        // dest dir does not exist
+        log.Fatal(fmt.Sprintf(
+          "'%s' quarantine destination '%s' does not exist",
+          watch.title, watch.qdest))
+      }
+    }
+  }
+
+  /*
+   * Make the channel buffered to ensure no event is dropped. Notify will drop
+   * an event if the receiver is not able to keep up the sending pace.
+   */
+  chNotify  := make(chan notify.EventInfo, 16)
+  chQuit    := make(chan int)
+
+  for _,watch := range watches {
+    fmt.Println("Adding watch: ", watch.title)
+    for _,path := range watch.path {
+      fmt.Println("  Path: ", path)
+      if err := notify.Watch(path, chNotify, notify.Create|notify.Write|notify.Rename); err != nil {
+          log.Fatal(err)
+      }
+    }
+  }
+  defer notify.Stop(chNotify)
+
+  // Block until an event is received.
+  for {
+    select {
+    case ei := <-chNotify:
+      //log.Println("Got event:", ei)
+      handle_event(ei)
+    case <-chQuit:
+      log.Println("QUIT")
+      os.Exit(0)
+    }
+  }
+}
+
+/*
  * FUNCTIONS
  */
 func load_config(fname string) (gconf global_config, watches []watchPath) {
@@ -167,90 +251,6 @@ func handle_event(ei notify.EventInfo) {
         }
         break
       }
-    }
-  }
-}
-
-/*
- * MAIN
- */
-var gconf global_config
-var watches []watchPath
-var version string  // set at build time by -ldflags
-func main() {
-  // process command line arguments
-  var conf_fname string
-  var show_version bool
-  flag.StringVar(&conf_fname, "config", default_conf_fname, "configuration file to load")
-  flag.BoolVar(&show_version, "version", false, "show version information")
-  flag.Parse()
-
-  if show_version {
-    fmt.Println("fscanary", version)
-    fmt.Println("Copyright 2018 Phillip Smith. Licensed under MIT license")
-    os.Exit(0)
-  }
-
-  // setup signal catching
-  sigs := make(chan os.Signal, 1)
-  // catch all signals since not explicitly listing
-  signal.Notify(sigs)
-  // method invoked upon seeing signal
-  go func() {
-    s := <-sigs
-    log.Printf("RECEIVED SIGNAL: %s", s)
-    os.Exit(1)
-  }()
-
-  // load configuration file
-  gconf, watches = load_config(conf_fname)
-
-  // Validate configuration
-  for _,watch := range watches {
-    if watch.qtine {
-      // must have a valid destination to quarantine to
-      if len(watch.qdest) == 0 {
-        // dest dir no configured!
-        log.Fatal(fmt.Sprintf(
-          "'%s' has quarantine enabled but no destination directory configured",
-          watch.title))
-      }
-      if x,_ := path_is_dir(watch.qdest); x != true {
-        // dest dir does not exist
-        log.Fatal(fmt.Sprintf(
-          "'%s' quarantine destination '%s' does not exist",
-          watch.title, watch.qdest))
-      }
-    }
-  }
-
-  /*
-   * Make the channel buffered to ensure no event is dropped. Notify will drop
-   * an event if the receiver is not able to keep up the sending pace.
-   */
-  chNotify  := make(chan notify.EventInfo, 16)
-  chQuit    := make(chan int)
-
-  for _,watch := range watches {
-    fmt.Println("Adding watch: ", watch.title)
-    for _,path := range watch.path {
-      fmt.Println("  Path: ", path)
-      if err := notify.Watch(path, chNotify, notify.Create|notify.Write|notify.Rename); err != nil {
-          log.Fatal(err)
-      }
-    }
-  }
-  defer notify.Stop(chNotify)
-
-  // Block until an event is received.
-  for {
-    select {
-    case ei := <-chNotify:
-      //log.Println("Got event:", ei)
-      handle_event(ei)
-    case <-chQuit:
-      log.Println("QUIT")
-      os.Exit(0)
     }
   }
 }
