@@ -13,7 +13,14 @@ and executable file to the company file server.
 
 ## Getting Started
 
-Deploy `fscanary` to your preferred bin location (eg, `/usr/local/bin/fscanary`)
+1. Download from the [Releases](https://github.com/fukawi2/fscanary/releases)
+page
+2. Deploy `fscanary` to your preferred binary location (eg,
+`/usr/local/bin/fscanary` or `~/bin/fscanary`)
+3. Copy the sample configuration file to the appropriate location:
+  * `/etc/fscanary.conf` on Linux
+  * `/usr/local/etc/fscanary.conf` on FreeBSD
+  * `C:\fscanary.conf` on Windows
 
 ### Configuration
 
@@ -34,6 +41,7 @@ Example configuration file:
 email = admin@example.com
 smtp_server = smarthost
 smtp_from = fscanary@example.com
+logging = 1
 
 [executables]
 enabled = yes
