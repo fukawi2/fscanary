@@ -37,7 +37,7 @@ import (
  * handles displaying of log messages
  */
 func logmsg(lvl int, msg string) error {
-  if (lvl > 9) {
+  if (lvl > gconf.log_level) {
     return nil
   }
   log.Println(strings.TrimSuffix(msg, "\n"))

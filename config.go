@@ -46,6 +46,12 @@ func load_config(fname string) (gconf global_config, watches []watchPath) {
   gconf.smtp_from   = cfg.Section(ini.DEFAULT_SECTION).Key("smtp_from").MustString(fmt.Sprintf("fscanary@%s", myhostname))
   gconf.smtp_server = cfg.Section(ini.DEFAULT_SECTION).Key("smtp_server").String()
   gconf.smtp_port   = cfg.Section(ini.DEFAULT_SECTION).Key("smtp_port").MustInt(25)
+  gconf.log_level   = cfg.Section(ini.DEFAULT_SECTION).Key("logging").MustInt(1)
+
+  // validate config
+  if gconf.log_level < 0 || gconf.log_level > 9 {
+    log.Fatal("Configuration option 'logging' must be between 0 and 9")
+  }
 
   // process watch sections
   section_names := cfg.SectionStrings()

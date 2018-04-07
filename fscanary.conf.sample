@@ -1,7 +1,15 @@
 # email address to send notifications to
 email = admin@example.com
+# smtp server to use for delivery of emails
 smtp_server = smarthost.example.com
 
+# logging level; 0 to 9. Higher number = Higher verbosity.
+#   1 is good for general operation.
+#   5 for debugging.
+#   9 is a fire hose of debug info.
+logging = 9
+
+# a watch for executable files. notifies the above email address
 [executables]
 enabled = yes
 path = /
