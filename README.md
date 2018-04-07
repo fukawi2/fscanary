@@ -38,6 +38,9 @@ smtp_from = fscanary@example.com
 [executables]
 enabled = yes
 path = /home
+notify = yes
+quarantine = yes
+dest = /quarantined
 pattern = *.exe
 pattern = *.bat
 pattern = *.js
@@ -48,9 +51,6 @@ pattern = *.dll
 pattern = *.lnk
 pattern = *.ps1
 pattern = *.scr
-notify = yes
-quarantine = yes
-dest = /quarantined
 ```
 
 ## Contributing
