@@ -26,7 +26,7 @@ page
 
 The default location of the config file is OS-specific and is shown in the
 output of `fscanary -help`. It can be overridden with the `-config` command line
-argument -config. For example:
+argument. For example:
 
 ```
 fscanary -config /root/fscanary.conf
