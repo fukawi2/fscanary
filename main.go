@@ -27,12 +27,9 @@ package main
 import (
   "fmt"
   "flag"
-  "os"
-  "io"
-  "path/filepath"
-  "os/signal"
   "log"
-  "gopkg.in/ini.v1"
+  "os"
+  "os/signal"
   "github.com/rjeczalik/notify"
   "github.com/gobwas/glob"
   "gopkg.in/gomail.v2"
@@ -84,7 +81,7 @@ func main() {
   // method invoked upon seeing signal
   go func() {
     s := <-sigs
-    log.Printf("RECEIVED SIGNAL: %s", s)
+    logmsg(0, fmt.Sprintf("RECEIVED SIGNAL: %s", s))
     os.Exit(1)
   }()
 
@@ -130,10 +127,10 @@ func main() {
   for {
     select {
     case ei := <-chNotify:
-      //log.Println("Got event:", ei)
+      logmsg(5, fmt.Sprintln("Got event:", ei))
       handle_event(ei)
     case <-chQuit:
-      log.Println("QUIT")
+      logmsg(1, "QUIT")
       os.Exit(0)
     }
   }
@@ -142,61 +139,10 @@ func main() {
 /*
  * FUNCTIONS
  */
-func load_config(fname string) (gconf global_config, watches []watchPath) {
-  cfg, err := ini.ShadowLoad(fname)
-  if err != nil {
-    fmt.Printf("Fail to read file: %v\n", err)
-    os.Exit(1)
-  }
-
-  // process global config
-  myhostname,_ := os.Hostname()
-  gconf.email       = cfg.Section(ini.DEFAULT_SECTION).Key("email").String()
-  gconf.smtp_from   = cfg.Section(ini.DEFAULT_SECTION).Key("smtp_from").MustString(fmt.Sprintf("fscanary@%s", myhostname))
-  gconf.smtp_server = cfg.Section(ini.DEFAULT_SECTION).Key("smtp_server").String()
-  gconf.smtp_port   = cfg.Section(ini.DEFAULT_SECTION).Key("smtp_port").MustInt(25)
-
-  // process watch sections
-  section_names := cfg.SectionStrings()
-  for _, sec_name := range section_names {
-    if sec_name == "DEFAULT" {
-      continue
-    }
-    var watch watchPath
-    watch.title   = sec_name
-    watch.path    = cfg.Section(sec_name).Key("path").ValueWithShadows()
-    watch.pattern = cfg.Section(sec_name).Key("pattern").ValueWithShadows()
-    watch.notify  = cfg.Section(sec_name).Key("notify").MustBool(true)
-    watch.qtine   = cfg.Section(sec_name).Key("quarantine").MustBool(false)
-    watch.qdest   = cfg.Section(sec_name).Key("dest").String()
-
-    watches = append(watches, watch)
-  }
-
-  return gconf, watches
-}
-
 func addWatch(ch chan notify.EventInfo, path string) {
   if err := notify.Watch(path + string(os.PathSeparator) + "...", ch, notify.Create|notify.Write|notify.Rename); err != nil {
+    if err
     log.Fatal(err)
-  }
-}
-
-/*
- * tests a path to determine if it is a directory or other file
- */
-func path_is_dir(path string) (bool, error) {
-  fi, err := os.Stat(path);
-  switch {
-  case err != nil:
-    // handle the error and return
-    return false, nil
-  case fi.IsDir():
-    // it's a directory
-    return true, nil
-  default:
-    // it's not a directory
-    return false, nil
   }
 }
 
@@ -228,25 +174,31 @@ func handle_event(ei notify.EventInfo) {
       if g.Match(ei.Path()) {
         if watch.notify {
           // send notification
-          fmt.Println(ei.Path(), "triggered notification to", gconf.email)
-          myhostname,_ := os.Hostname()
-          m := gomail.NewMessage()
-          m.SetHeader("From", gconf.smtp_from)
-          m.SetHeader("To", gconf.email)
-          m.SetHeader("Subject",
-            fmt.Sprintf("File Matching '%s'", watch.title))
-          m.SetBody("text/plain",
-            fmt.Sprintf("The following file matching pattern '%s' was saved on host %s\n\n%s",
-            pattern, myhostname, ei.Path()))
+          logmsg(1, fmt.Sprintf("Sending notification to '%s' due to file '%s'",
+            ei.Path(), gconf.email))
+          /*
+           * handle the sending of the email in a subroutine so it
+           * can run asynchronously and not hold up further processing
+           */
+          go func() {
+            myhostname,_ := os.Hostname()
+            m := gomail.NewMessage()
+            m.SetHeader("From", gconf.smtp_from)
+            m.SetHeader("To", gconf.email)
+            m.SetHeader("Subject",
+              fmt.Sprintf("File Matching '%s'", watch.title))
+            m.SetBody("text/plain",
+              fmt.Sprintf("The following file matching pattern '%s' was saved on host %s\n\n%s",
+              pattern, myhostname, ei.Path()))
 
-          d := gomail.Dialer{Host: gconf.smtp_server, Port: gconf.smtp_port}
-          if err := d.DialAndSend(m); err != nil {
-            panic(err)
-          }
+            d := gomail.Dialer{Host: gconf.smtp_server, Port: gconf.smtp_port}
+            if err := d.DialAndSend(m); err != nil { panic(err) }
+          }()
         }
         if watch.qtine {
           // quarantine the file
-          fmt.Println(ei.Path(), "being quarantined to", watch.qdest)
+          logmsg(1, fmt.Sprintf("Quarantining '%s' to '%s'",
+            ei.Path(), watch.qdest))
           err := moveFile(ei.Path(), watch.qdest + ei.Path())
           if err != nil {
             fmt.Println(err)
@@ -257,36 +209,4 @@ func handle_event(ei notify.EventInfo) {
       }
     }
   }
-}
-
-func moveFile(src string, dst string) error {
-  // make sure the file exists by stat'ing it
-  fi, err := os.Stat(src)
-  if err != nil { return err }
-
-  // create any leading directory structure for the destination
-  if err = os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-    fmt.Printf("MkdirAll(%v)\n", filepath.Dir(dst))
-    return err
-  }
-
-  // open the source and destination files
-  fsrc, err := os.Open(src)
-  if err != nil { return err }
-
-  fdst, err := os.Create(dst)
-  if err != nil { return err }
-
-  // copy from old to new
-  if _, err = io.Copy(fdst, fsrc); err != nil {
-    return err
-  }
-
-  if err == nil { err = fsrc.Close() }
-  if err == nil { err = fdst.Close() }
-  if err == nil { err = os.Chmod(dst, fi.Mode()) }
-  if err == nil { err = os.Chtimes(dst, fi.ModTime(), fi.ModTime()) }
-  if err == nil { err = os.Remove(src) }
-
-  return nil
 }
