@@ -27,8 +27,17 @@ package main
 import (
   "fmt"
   "os"
+  "log"
   "gopkg.in/ini.v1"
 )
+
+type global_config struct {
+  email       string
+  smtp_from   string
+  smtp_server string
+  smtp_port   int
+  log_level   int
+}
 
 /*
  * loads configuration from file
@@ -36,8 +45,7 @@ import (
 func load_config(fname string) (gconf global_config, watches []watchPath) {
   cfg, err := ini.ShadowLoad(fname)
   if err != nil {
-    fmt.Printf("Fail to read file: %v\n", err)
-    os.Exit(1)
+    log.Fatal(fmt.Sprintf("Fail to read file: %v\n", err))
   }
 
   // process global config

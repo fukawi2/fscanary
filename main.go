@@ -39,13 +39,6 @@ import (
 /*
  * STRUCTS
  */
-type global_config struct {
-  email       string
-  smtp_from   string
-  smtp_server string
-  smtp_port   int
-}
-
 type watchPath struct {
   title   string    // name of the watch
   path    []string  // path(s) to watch
