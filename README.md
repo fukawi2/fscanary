@@ -36,6 +36,7 @@ smtp_server = smarthost
 smtp_from = fscanary@example.com
 
 [executables]
+enabled = yes
 path = /home
 pattern = *.exe
 pattern = *.bat
@@ -60,6 +61,7 @@ Pull requests welcomed! Please keep the following points in mind:
   * Multiple minor changes such as spelling may be in a single PR.
 * Documentation must be updated with the PR where the change warrants
   documentation changes.
+* Check the TODO.md file for specific tasks that are outstanding.
 
 ## Authors
 
