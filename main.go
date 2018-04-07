@@ -30,6 +30,7 @@ import (
   "log"
   "os"
   "os/signal"
+  "path"
   "github.com/rjeczalik/notify"
   "github.com/gobwas/glob"
   "gopkg.in/gomail.v2"
@@ -165,12 +166,16 @@ func handle_event(ei notify.EventInfo) {
     return
   }
 
+  // strip leading path fom ei.Path() so we can compare patterns against the
+  // filename only rather than the full path
+  fname := path.Base(ei.Path())
   for _,watch := range watches {
     // check for matching patterns
     for _,pattern := range watch.pattern {
       var g glob.Glob
       g = glob.MustCompile(pattern)
-      if g.Match(ei.Path()) {
+      if g.Match(fname) {
+        logmsg(4, "Match found")
         if watch.notify {
           // send notification
           logmsg(1, fmt.Sprintf("Sending notification to '%s' due to file '%s'",
