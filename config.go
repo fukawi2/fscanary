@@ -53,6 +53,9 @@ func load_config(fname string) (gconf global_config, watches []watchPath) {
     if sec_name == "DEFAULT" {
       continue
     }
+    if cfg.Section(sec_name).Key("enabled").MustBool(true) == false {
+      continue
+    }
     var watch watchPath
     watch.title   = sec_name
     watch.path    = cfg.Section(sec_name).Key("path").ValueWithShadows()
