@@ -125,6 +125,7 @@ func main() {
   defer notify.Stop(chNotify)
 
   // Block until an event is received.
+  logmsg(0,"Ready")
   for {
     select {
     case ei := <-chNotify:
@@ -162,7 +163,7 @@ func handle_event(ei notify.EventInfo) {
 
   // abort if file is actually a directory
   if x,_ := path_is_dir(ei.Path()); x == true {
-    fmt.Println("Ignoring directory:", ei.Path())
+    logmsg(1, fmt.Sprintf("Ignoring directory: %s", ei.Path()))
     return
   }
 
@@ -172,6 +173,7 @@ func handle_event(ei notify.EventInfo) {
   for _,watch := range watches {
     // check for matching patterns
     for _,pattern := range watch.pattern {
+      logmsg(2, fmt.Sprintf("Comparing '%s' to '%s'", fname, pattern))
       var g glob.Glob
       g = glob.MustCompile(pattern)
       if g.Match(fname) {
@@ -213,4 +215,5 @@ func handle_event(ei notify.EventInfo) {
       }
     }
   }
+  logmsg(3, fmt.Sprintf("Finished examining '%s'", ei.Path()))
 }
