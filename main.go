@@ -141,7 +141,6 @@ func main() {
  */
 func addWatch(ch chan notify.EventInfo, path string) {
   if err := notify.Watch(path + string(os.PathSeparator) + "...", ch, notify.Create|notify.Write|notify.Rename); err != nil {
-    if err
     log.Fatal(err)
   }
 }
