@@ -96,6 +96,7 @@ func main() {
   chNotify  := make(chan notify.EventInfo, 16)
   chQuit    := make(chan int)
 
+  fmt.Println("Creating watches. This may take a long time for large directory trees. Please wait for Ready message.")
   for _,watch := range watches {
     fmt.Println("Adding watch: ", watch.title)
     for _,path := range watch.path {
