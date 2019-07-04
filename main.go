@@ -29,7 +29,6 @@ import (
   "flag"
   "log"
   "os"
-  "os/signal"
   "path"
   "github.com/rjeczalik/notify"
   "github.com/gobwas/glob"
@@ -67,17 +66,6 @@ func main() {
     fmt.Println("Copyright 2018 Phillip Smith. Licensed under MIT license")
     os.Exit(0)
   }
-
-  // setup signal catching
-  sigs := make(chan os.Signal, 1)
-  // catch all signals since not explicitly listing
-  signal.Notify(sigs)
-  // method invoked upon seeing signal
-  go func() {
-    s := <-sigs
-    logmsg(0, fmt.Sprintf("RECEIVED SIGNAL: %s", s))
-    os.Exit(1)
-  }()
 
   // load configuration file
   gconf, watches = load_config(conf_fname)
