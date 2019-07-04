@@ -163,7 +163,7 @@ func handle_event(ei notify.EventInfo) {
         if watch.notify {
           // send notification
           logmsg(1, fmt.Sprintf("Sending notification to '%s' due to file '%s'",
-            ei.Path(), gconf.email))
+            gconf.email, ei.Path()))
           /*
            * handle the sending of the email in a subroutine so it
            * can run asynchronously and not hold up further processing
