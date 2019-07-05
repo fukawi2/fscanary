@@ -145,7 +145,7 @@ func handle_event(ei notify.EventInfo) {
 
   // abort if file is actually a directory
   if x,_ := path_is_dir(ei.Path()); x == true {
-    logmsg(1, fmt.Sprintf("Ignoring directory: %s", ei.Path()))
+    logmsg(5, fmt.Sprintf("Skipping Event (is directory): %s", ei.Path()))
     return
   }
 
